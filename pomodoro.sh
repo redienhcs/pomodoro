@@ -17,15 +17,17 @@ savedmode="$DIR/savedmode"
 savedcyclecount="$DIR/savedcyclecount"
 lock="$DIR/lock"
 
+musicplay="$DIR/start.wav"
+
 pomodoro_cycle=$(( pomodoro_time * 60 ))
 short_break_cycle=$(( short_break_time * 60 ))
 long_break_cycle=$(( long_break_time * 60 ))
 notify_time=$(( notify_time * 1000 ))
 summary="Pomodoro"
-startmsg="Pomodoro started, you have $pomodoro_time minutes left"
-endmsg_shortbreak="Pomodoro ended, stop the work and take short break"
-endmsg_longbreak="Pomodoro ended, stop the work and take long break"
-killmsg="Pomodoro stopped, restart when you are ready"
+startmsg="O pomodoro começou, você tem $pomodoro_time minutos restantes"
+endmsg_shortbreak="O Pomodoro terminou, pare de trabalhar e faça uma pequna pausa"
+endmsg_longbreak="O Pomodoro terminou, pare de trabalhar e faça uma pausa mais longa"
+killmsg="Pomodoro parado, reinicique quando você estiver pronto"
 
 function xnotify () {
 	notify-send -t $notify_time -i "$DIR/icons/running.png" "$summary" "$1"
@@ -60,7 +62,7 @@ function render_status () {
 	echo "<click>$DIR/pomodoro.sh -n</click>"
 	echo "<txt>$remaining_time_display</txt>"
 	echo "<img>$DIR/icons/$display_icon$size.png</img>"
-	echo "<tool>$display_mode: You have $remaining_time_display min left [#$saved_cycle_count]</tool>"
+	echo "<tool>$display_mode: Você tem $remaining_time_display minutos restantes [#$saved_cycle_count]</tool>"
 }
 
 ( flock -x 200
@@ -76,6 +78,7 @@ current_time=$( date +%s )
 if [ "$1" == "-n" ] ; then
 	if [ "$mode" == "idle" ] ; then
 		xnotify "$startmsg"
+		musicplay="$DIR/start.wav"
 		echo $current_time > "$savedtime"
 		echo "pomodoro" > "$savedmode"
 		echo "0" > "$savedcyclecount"
@@ -89,7 +92,7 @@ else
 	if [ $mode == "idle" ] ; then
 		echo "<click>$DIR/pomodoro.sh -n</click>"
 		echo "<img>$DIR/icons/stopped$size.png</img>"
-		echo "<tool>No Pomodoro Running</tool>"
+		echo "<tool>Nenhum pomodoro ativo no momento</tool>"
 
 	else
 		# timer running
@@ -134,6 +137,7 @@ else
 				new_remaining_time=$short_break_cycle
 				new_mode="shortbreak"
 				msg=$endmsg_shortbreak
+				musicplay="$DIR/end.wav"
 				if [ $cycle_mod -eq 0 ] ; then
 				  new_mode="longbreak"
 				  msg=$endmsg_longbreak
@@ -150,7 +154,7 @@ else
 
 			fi
 
-			aplay "$DIR/cow.wav"
+			aplay $musicplay
 			xnotify "$msg"
 			zenity --info --text="$msg"
 			echo "$current_time" > "$savedtime"
